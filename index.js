@@ -30,6 +30,7 @@ const client = new MongoClient(uri, {
 async function run() {
   const database = client.db("FoodDB");
     const userCollection = database.collection("food");
+    const productCollection = database.collection("product");
     app.get('/food',async(req,res)=>{
       const cursor = userCollection.find()
       const result = await cursor.toArray()
@@ -41,14 +42,70 @@ async function run() {
       const result = await userCollection.findOne(query)
       res.send(result)
     })
+    app.get('/foo/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await userCollection.findOne(query)
+      res.send(result)
+    })
    app.post('/addfood',async(req,res)=>{
         const product = req.body;
         const result = await userCollection.insertOne(product);
         res.send(result)
 
     })
+    app.get('/food/:email',async(req,res)=>{
+      console.log(req.params.email)
+      const email = req.params.email
+      const query = {'AddBy.email': email}
+      const result = await userCollection.find(query).toArray()
+      res.send(result)
+  })
+  app.get('/update/:id',async(req,res)=>{
+    const id = req.params.id;
+    const query = {_id: new ObjectId(id)}
+    const result = await userCollection.findOne(query)
+    res.send(result)
+  })
+  app.put('/update/:id',async(req,res)=>{
+    const id = req.params.id
+    const filter = {_id: new ObjectId(id)}
+    const options = {upsert: true}
+    const updatedfood = req.body
+    const food = {
+      $set: {
+        FoodName : updatedfood.FoodName,
+        FoodImage : updatedfood.FoodImage,
+        FoodOrigin : updatedfood.FoodOrigin,
+        Description : updatedfood.Description,
+        Price : updatedfood.Price,
+        quantity : updatedfood.quantity,
+        FoodCategory : updatedfood.FoodCategory,
+      }
+    }
+    const result = await userCollection.updateOne(filter,food,options)
+    res.send(result)
+  })
+  app.post('/addproduct',async(req,res)=>{
+    const product = req.body;
+    const result = await productCollection.insertOne(product);
+    res.send(result)
 
-
+})
+ app.put('/updatefood/:id',async(req,res)=>{
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const updatedsize = req.body
+    const updatedSell = parseInt(updatedsize.quantity)
+    const update = {
+      $inc: {
+        purchaseCount: updatedSell, // Increase by updatedSell
+        quantity: -updatedSell, // Decrease by updatedQuantity
+      },
+    }
+    const result = await userCollection.updateOne(filter, update);
+    res.send(result)
+ })
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
