@@ -92,20 +92,25 @@ async function run() {
     res.send(result)
 
 })
- app.put('/updatefood/:id',async(req,res)=>{
-    const id = req.params.id;
-    const filter = { _id: new ObjectId(id) };
-    const updatedsize = req.body
-    const updatedSell = parseInt(updatedsize.quantity)
-    const update = {
-      $inc: {
-        purchaseCount: updatedSell, // Increase by updatedSell
-        quantity: -updatedSell, // Decrease by updatedQuantity
-      },
-    }
-    const result = await userCollection.updateOne(filter, update);
-    res.send(result)
- })
+app.put('/updatefood/:id', async (req, res) => {
+  
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedsize = req.body;
+      console.log(updatedsize);
+
+      const updatedSell = parseInt(updatedsize.quantity);
+      const update = {
+          $inc: {
+              purchaseCount: updatedSell, // Increase by updatedSell
+              quantity: -updatedSell, // Decrease by updatedSell
+          }
+      };
+
+      const result = await userCollection.updateOne(filter, update);
+      res.json(result);
+ 
+});
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
