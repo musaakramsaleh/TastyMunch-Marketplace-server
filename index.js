@@ -41,7 +41,12 @@ async function run() {
       const result = await userCollection.findOne(query)
       res.send(result)
     })
+   app.post('/addfood',async(req,res)=>{
+        const product = req.body;
+        const result = await userCollection.insertOne(product);
+        res.send(result)
 
+    })
 
 
   try {
