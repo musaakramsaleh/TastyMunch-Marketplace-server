@@ -115,6 +115,11 @@ app.put('/updatefood/:id', async (req, res) => {
     const result = await userCollection.find().sort({ purchaseCount: -1 }).limit(6).toArray();
      res.send(result)
   })
+  app.get('/found', async (req, res) => {
+    const { search } = req.query;
+    const foods = await userCollection.find({ FoodName: { $regex: search, $options: 'i' } }).toArray();
+    res.send(foods);
+});
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
