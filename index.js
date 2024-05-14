@@ -31,6 +31,7 @@ async function run() {
   const database = client.db("FoodDB");
     const userCollection = database.collection("food");
     const productCollection = database.collection("product");
+    const galleryCollection = database.collection("gallery");
     app.get('/food',async(req,res)=>{
       const cursor = userCollection.find()
       const result = await cursor.toArray()
@@ -55,7 +56,6 @@ async function run() {
 
     })
     app.get('/food/:email',async(req,res)=>{
-      console.log(req.params.email)
       const email = req.params.email
       const query = {'AddBy.email': email}
       const result = await userCollection.find(query).toArray()
@@ -97,7 +97,6 @@ app.put('/updatefood/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updatedsize = req.body;
-      console.log(updatedsize);
 
       const updatedSell = parseInt(updatedsize.quantity);
       const update = {
@@ -119,6 +118,16 @@ app.put('/updatefood/:id', async (req, res) => {
     const { search } = req.query;
     const foods = await userCollection.find({ FoodName: { $regex: search, $options: 'i' } }).toArray();
     res.send(foods);
+});
+app.post('/gallery',async(req,res)=>{
+  const product = req.body;
+  const result = await galleryCollection.insertOne(product);
+  res.send(result)
+})
+app.get('/gallery', async (req, res) => {
+  const cursor = galleryCollection.find()
+      const result = await cursor.toArray()
+      res.send(result)
 });
   try {
     // Connect the client to the server	(optional starting in v4.7)
