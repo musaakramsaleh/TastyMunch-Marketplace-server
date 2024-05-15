@@ -61,6 +61,12 @@ async function run() {
       const result = await userCollection.find(query).toArray()
       res.send(result)
   })
+  app.get('/product/:email',async(req,res)=>{
+    const email = req.params.email
+    const query = {BuyerEmail: email}
+    const result = await productCollection.find(query).toArray()
+    res.send(result)
+})
   app.get('/update/:id',async(req,res)=>{
     const id = req.params.id;
     const query = {_id: new ObjectId(id)}
@@ -129,6 +135,12 @@ app.get('/gallery', async (req, res) => {
       const result = await cursor.toArray()
       res.send(result)
 });
+app.delete('/product/:id',async(req,res)=>{
+  const id = req.params.id
+  const query = {_id: new ObjectId(id)}
+  const result = await productCollection.deleteOne(query)
+  res.send(result)
+})
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
