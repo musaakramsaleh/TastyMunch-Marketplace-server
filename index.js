@@ -1,5 +1,7 @@
 const express = require('express')
 const cors = require('cors')
+const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 5000
@@ -14,7 +16,7 @@ const corsOption = {
 
 app.use(cors(corsOption))
 app.use(express.json())
-
+app.use(cookieParser())
 
 const uri = `mongodb+srv://${process.env.DB_user}:${process.env.DB_pass}@cluster0.zuwbcyf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -27,12 +29,55 @@ const client = new MongoClient(uri, {
   }
 });
 
+const logger = (req,res,next)=>{
+  console.log(req.method,req.url);
+  next();
+}
+const verifytoken = (req,res,next) =>{
+  const token = req?.cookies?.token
+  if(!token){
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+  jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(err,decoded)=>{
+    if(err){
+      return res.status(401).send({message: 'unauthorized access'})
+    }
+    req.user = decoded
+    next()
+  })
+  
+}
+
 async function run() {
   const database = client.db("FoodDB");
     const userCollection = database.collection("food");
     const productCollection = database.collection("product");
     const galleryCollection = database.collection("gallery");
     const UserCollection = database.collection("user");
+
+    app.post('/jwt', async(req,res)=>{
+      const user = req.body
+      const token = jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{
+        expiresIn:"1d"
+      })
+      res.cookie('token',token,{
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict"
+      })
+      .send({success: true})
+    }) 
+    
+    app.get('/logout',(req,res)=>{
+      res.clearCookie('token',{
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        maxAge:0,
+      })
+      .send({success: true})
+    })
+
     app.get('/food',async(req,res)=>{
       const cursor = userCollection.find()
       const result = await cursor.toArray()
@@ -44,31 +89,40 @@ async function run() {
       const result = await userCollection.findOne(query)
       res.send(result)
     })
-    app.get('/foo/:id',async(req,res)=>{
+    app.get('/foo/:id',verifytoken,async(req,res)=>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result = await userCollection.findOne(query)
       res.send(result)
     })
-   app.post('/addfood',async(req,res)=>{
+   app.post('/addfood',verifytoken,async(req,res)=>{
         const product = req.body;
+        console.log(" Add food info",req.user)
         const result = await userCollection.insertOne(product);
         res.send(result)
 
     })
-    app.get('/food/:email',async(req,res)=>{
+    app.get('/food/:email',verifytoken,async(req,res)=>{
       const email = req.params.email
+      console.log("token owner info",req.user)
+      if(req.user.email !== req.params.email){
+            return res.status(403).send({message:'forbidden access'})
+      }
       const query = {'AddBy.email': email}
       const result = await userCollection.find(query).toArray()
       res.send(result)
   })
-  app.get('/product/:email',async(req,res)=>{
+  app.get('/product/:email',verifytoken,async(req,res)=>{
     const email = req.params.email
+    console.log("product owner info",req.user)
+      if(req.user.email !== req.params.email){
+            return res.status(403).send({message:'forbidden access'})
+      }
     const query = {BuyerEmail: email}
     const result = await productCollection.find(query).toArray()
     res.send(result)
 })
-  app.get('/update/:id',async(req,res)=>{
+  app.get('/update/:id',verifytoken,async(req,res)=>{
     const id = req.params.id;
     const query = {_id: new ObjectId(id)}
     const result = await userCollection.findOne(query)
@@ -108,8 +162,8 @@ app.put('/updatefood/:id', async (req, res) => {
       const updatedSell = parseInt(updatedsize.quantity);
       const update = {
           $inc: {
-              purchaseCount: updatedSell, // Increase by updatedSell
-              quantity: -updatedSell, // Decrease by updatedSell
+              purchaseCount: updatedSell, 
+              quantity: -updatedSell, 
           }
       };
 
@@ -145,6 +199,12 @@ app.delete('/product/:id',async(req,res)=>{
   const id = req.params.id
   const query = {_id: new ObjectId(id)}
   const result = await productCollection.deleteOne(query)
+  res.send(result)
+})
+app.delete('/food/:id',async(req,res)=>{
+  const id = req.params.id
+  const query = {_id: new ObjectId(id)}
+  const result = await userCollection.deleteOne(query)
   res.send(result)
 })
   try {
