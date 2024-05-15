@@ -9,7 +9,7 @@ const port = process.env.PORT || 5000
 const app = express()
 // msMP3oKRdeJohUkH
 const corsOption = {
-    origin:['http://localhost:5173'],
+    origin:['http://localhost:5173','https://restaurant-8605a.firebaseapp.com'],
     credentials: true,
     optionSuccessStatus: 200,
 }
