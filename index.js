@@ -32,6 +32,7 @@ async function run() {
     const userCollection = database.collection("food");
     const productCollection = database.collection("product");
     const galleryCollection = database.collection("gallery");
+    const UserCollection = database.collection("user");
     app.get('/food',async(req,res)=>{
       const cursor = userCollection.find()
       const result = await cursor.toArray()
@@ -128,6 +129,11 @@ app.put('/updatefood/:id', async (req, res) => {
 app.post('/gallery',async(req,res)=>{
   const product = req.body;
   const result = await galleryCollection.insertOne(product);
+  res.send(result)
+})
+app.post('/user',async(req,res)=>{
+  const product = req.body;
+  const result = await UserCollection.insertOne(product);
   res.send(result)
 })
 app.get('/gallery', async (req, res) => {
