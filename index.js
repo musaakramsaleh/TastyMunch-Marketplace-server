@@ -9,7 +9,7 @@ const port = process.env.PORT || 5000
 const app = express()
 // msMP3oKRdeJohUkH
 const corsOption = {
-    origin:['http://localhost:5173','https://restaurant-8605a.firebaseapp.com'],
+    origin:['http://localhost:5173','https://restaurant-8605a.firebaseapp.com','https://restaurant-8605a.web.app'],
     credentials: true,
     optionSuccessStatus: 200,
 }
@@ -82,6 +82,23 @@ async function run() {
       const cursor = userCollection.find()
       const result = await cursor.toArray()
       res.send(result)
+    })
+    app.get('/all-food',async(req,res)=>{
+      const size = parseInt(req.query.size)
+      const page = parseInt(req.query.page) -1 
+      const search = req.query.search
+       let query = { FoodName: { $regex: search, $options: 'i' } }
+      
+      const result = await userCollection.find(query).skip(page*size).limit(size).toArray()
+      res.send(result)
+      
+    })
+    app.get('/food-count',async(req,res)=>{
+      const search = req.query.search;
+    let query = { FoodName: { $regex: search, $options: 'i' } };
+    
+    const count = await userCollection.countDocuments(query);
+    res.send({ count });
     })
     app.get('/foods/:id',async(req,res)=>{
       const id = req.params.id;
